@@ -1,0 +1,68 @@
+---
+title: "R 04"
+output: html_notebook
+---
+
+# Sampling Error
+
+```{r}
+# We assume hat the distribution of the population (i.e. of the random variable X)  is known to be normal with mu=36.75 and sigma=0.45
+mu <- 36.75
+sigma <- 0.45 
+
+# we use the sample mean to estimate mu and compute the sampling error sample size and sample
+samplesize <- 5
+x <- rnorm(samplesize, mean=mu, sd=sigma)
+
+# estimate
+mu.hat <- mean(x)
+mu.hat
+
+# sampling error
+sampling.error <- mu.hat-mu
+sampling.error
+```
+
+# Sampling Distribution of a Statistic
+
+```{r}
+# As above, we assume that the distribution of population variable X is known to be normal with mu=36.75 and sigma=0.45
+mu <- 36.75
+sigma <- 0.45 
+
+# We obtain through simulations the sampling distribution of the mean as follows:
+# 1. we extract 10^4 samples of size n=5
+# 2. for each sample compute the arithmetic mean
+# 3. represent the histogram of the 10^4 means
+# 4. add a (dashed) vertical line corresponding to mu
+samplesize <- 5 # sample size n
+
+all.samples <- c()
+for (i in 1:10000){
+  x <- rnorm(samplesize, mean=mu, sd=sigma)
+  all.samples <- c(all.samples, mean(x))
+}
+
+hist.title <- 'sample mean'
+hist(all.samples, freq=FALSE, xlab='', ylab='',col='lightgray', main=hist.title)
+abline(v=mu, col='red', lty=2, lwd=3)
+
+# Compare the empirical distribution of the mean with theoretical one. In the case where the population follows a normal distribution and the sample is i.i.d. the distribution of the sample mean is known tobe normally distributed
+curve(dnorm(x, mean=mu, sd=sigma/sqrt(samplesize)), add=TRUE, lwd=2, col='blue')
+```
+
+# Sampling distribution of the variance for normal populations
+
+```{r}
+samplesize <- 10
+s2 <- c()
+for (i in 1:10000) s2 <- c(s2, var(rnorm(samplesize, mu, sigma)))
+
+hist(s2, freq=FALSE)
+var(s2)
+
+y <- (samplesize-1)*s2/(sigma^2)
+
+hist(y, freq=FALSE)
+curve(dchisq(x, samplesize-1), add=TRUE, lwd=2, col='red')
+```

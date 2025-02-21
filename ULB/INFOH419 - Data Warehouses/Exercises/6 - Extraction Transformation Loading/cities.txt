@@ -1,0 +1,114 @@
+Atlanta	Georgia	USA
+Austin	Texas	USA
+Beachwood	Ohio	USA
+Bedford	Indiana	USA
+Bellevue	Kentucky	USA
+Bentonville	Arkansas	USA
+Bloomfield Hills	Michigan	USA
+Boston	Massachusetts	USA
+Braintree	Massachusetts	USA
+Cambridge	Massachusetts	USA
+Campbell	California	USA
+Cary	North Carolina	USA
+Chicago	Illinois	USA
+Colorado Springs	Colorado	USA
+Columbia	South Carolina	USA
+Dallas	Texas	USA
+Denver	Colorado	USA
+Edison	New Jersey	USA
+Fairport	New York	USA
+Findlay	Ohio	USA
+Georgetown	South Carolina	USA
+Greensboro	North Carolina	USA
+Hoffman Estates	Illinois	USA
+Hollis	Oklahoma	USA
+Louisville	Kentucky	USA
+Melvile	Louisiana	USA
+Menlo Park	California	USA
+Minneapolis	Minnesota	USA
+Morristown	New Jersey	USA
+New York	New York	USA
+Newark	New Jersey	USA
+Orlando	Florida	USA
+Philadelphia	Pennsylvania	USA
+Phoenix	Arizona	USA
+Portsmouth	New Hampshire	USA
+Providence	Rhode Island	USA
+Racine	Wisconsin	USA
+Redmond	Washington	USA
+Rockville	Maryland	USA
+Roseville	California	USA
+San Francisco	California	USA
+Santa Clara	California	USA
+Santa Cruz	California	USA
+Santa Monica	California	USA
+Savannah	Georgia	USA
+Scottsdale	Arizona	USA
+Seattle	Washington	USA
+Southfield	Michigan	USA
+Tampa	Florida	USA
+Troy	Michigan	USA
+Westboro	Massachusetts	USA
+Wilton	Connecticut	USA
+Buenos Aires	Buenos Aires	Argentina
+Graz	Steiermark	Austria
+Salzburg	Salzburg	Austria
+Bruxelles	Bruxelles	Belgium
+Charleroi	Hainaut	Belgium
+Sao Paulo	Sao Paulo	Brazil
+Århus	Århus	Denmark
+Kobenhavn	Kobenhavn	Denmark
+Lyngby	Lyngby-Taarbæk	Denmark
+Helsinki	Southern Finland	Finland
+Lappeenranta	Southern Finland	Finland
+Oulu	Oulu	Finland
+Annecy	Haute-Savoie	France
+Lille	Nord	France
+Lyon	Rhône	France
+Marseille	Bouches-du-Rhône	France
+Montceau	Saône-et-Loire	France
+Nantes	Loire-Atlantique	France
+Paris	Paris	France
+Reims	Marne	France
+Strasbourg	Bas-Rhin	France
+Toulouse	Haute-Garonne	France
+Versailles	Yvelines	France
+Aachen	North Rhine-Westphalia	Germany
+Berlin	Berlin	Germany
+Brandenburg	Brandenburg	Germany
+Cunewalde	Saxony	Germany
+Cuxhaven	Lower Saxony	Germany
+Frankfurt	Brandenburg	Germany
+Frankfurt a.M.	Hesse	Germany
+Köln	North Rhine-Westphalia	Germany
+Leipzig	Saxony	Germany
+Mannheim	Baden-Württemberg	Germany
+München	Bavaria	Germany
+Münster	North Rhine-Westphalia	Germany
+Stuttgart	Baden-Württemberg	Germany
+Bergamo	Bergamo	Italy
+Ravenna	Ravenna	Italy
+Reggio Emilia	Reggio Emilia	Italy
+Salerno	Salerno	Italy
+Torino	Torino	Italy
+Osaka	Osaka	Japan
+Tokyo	Tokyo	Japan
+México D.F.	México D.F.	Mexico
+Zaandam	North Holland	Netherlands
+Sandvika	Akershus	Norway
+Stavern	Vestfold	Norway
+Warszawa	Mazowieckie	Poland
+Lisboa	Lisboa	Portugal
+Singapore	NULL	Singapore
+Barcelona	Barcelona	Spain
+Madrid	Madrid	Spain
+Sevilla	Madrid	Spain
+Bräcke	Jämtland	Sweden
+Göteborg	Västra Götaland	Sweden
+Luleå	Norrbotten	Sweden
+Stockholm	Stockholm	Sweden
+Bern	Bern	Switzerland
+Genève	Bern	Switzerland
+London	London	UK
+Manchester	Manchester	UK
+

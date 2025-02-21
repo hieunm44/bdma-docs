@@ -1,0 +1,634 @@
+---
+title: "R 03"
+output: html_notebook
+---
+
+# Uniform Distribution
+
+```{r}
+# density function of U(0, 1)
+dunif(0.2, min=0, max=1)
+dunif(0.2) # 0 and 1 are the default values
+
+# cumulative distribution function of U(0, 1)
+punif(0.2)
+
+# uniformly distributed random values
+runif(3)
+runif(3, -3, 4)
+```
+
+# Exponential Distribution
+
+```{r}
+f <- function(x, lambda=1) lambda*exp(-lambda*x)
+
+f(0.5)
+f(0.5, lambda=1/3)
+
+# or equivalently
+
+dexp(0.5)
+dexp(0.5, rate=1/3) # rate=lambda
+```
+
+Plot Probability Density Function
+
+```{r}
+# the curve function 
+curve(f, from=0, to=5) # note that f needs to be a function of 'x'
+
+curve(f(x, lambda=1), 0, 5) # to include additional arguments 
+curve(f(x, lambda=1/3), 0, 5)
+
+# exploit the build-in function for pdf
+curve(dexp, 0, 5)
+curve(dexp(x, rate=1/3), 0, 5)
+
+# plot the cdf
+curve(pexp, 0, 5)
+curve(pexp(x, rate=1/3), 0, 5)
+```
+
+Comparison of exponential densities
+
+```{r}
+x <- seq(0, 2, length=40)
+theta <- c(2, 1, .2, .1) # mean of distribution
+y <- matrix(NA, 40, 4)
+for (i in 1:4) {
+  y[,i] <- dexp(x, 1/theta[i]) # parameter is the rate=lambda
+}
+
+# legend with the expected value 'theta'
+matplot(x, y, type='l', xlab='x', ylab='p(x)', lty=1:4, col=1)
+legend('topright', paste('theta =', theta), lty=1:4)
+
+# legend with the rate 'lambda'
+matplot(x, y, type='l', xlab='x', ylab='p(x)', lty=1:4, col=1)
+legend('topright', paste('lambda =', 1/theta), lty=1:4)
+```
+
+# Normal Distribution
+
+Distribution for different values of mu and sigma
+
+```{r}
+# some pdf's
+curve(dnorm,-8,8)
+curve(dnorm(x, mean=0, sd=2), add=TRUE, col=2)
+curve(dnorm(x, mean=0, sd=4), add=TRUE, col=3)
+
+curve(dnorm, -8, 8)
+curve(dnorm(x, -2, 1), add=TRUE, col=2)
+curve(dnorm(x,  2, 2), add=TRUE, col=3)
+
+# and corresponding cdf's
+curve(pnorm,-8,8)
+curve(pnorm(x,0,2),add=TRUE, col=2)
+curve(pnorm(x,0,4),add=TRUE, col=3)
+
+# compute probabilities of the normal distribution 
+# N(0, 1), Pr(X<0)
+pnorm(0)
+
+# N(0,1), Pr(-1<X<2)
+pnorm(2)-pnorm(-1)
+
+# N(2, 5), Pr(1<X<7)
+pnorm(7, mean = 2, sd=sqrt(5))-pnorm(1, mean = 2, sd=sqrt(5))
+```
+
+# Quantiles and Cumulative Distribution Function (CDF)
+
+Uniform distribution
+
+```{r}
+qunif(0.6, min=-0.5, max=1.5)
+
+pr <- 0.6
+q  <- qunif(pr, min=-0.5, max=1.5)
+q
+```
+
+Represent the quantile on the probability DENSITY function
+
+```{r}
+curve(dunif(x, min=-0.5, max=1.5), -0.5, 1.5, xlim=c(-1, 2), ylim=c(0, 0.7), ylab='f(x)')
+lines(c(-0.5, -0.5), c(0, 0.5), lty=3)
+lines(c(1.5, 1.5), c(0, 0.5), lty=3)
+abline(h=0)
+polygon(c(-0.5, -0.5, q, q), c(0, 0.5, 0.5, 0), col='gray')
+```
+
+Represent the quantile on the CUMULATIVE distribution function
+
+```{r}
+pr <- 0.6
+q <- qunif(pr, -0.5, 1.5)
+curve(punif(x, min=-0.5, max=1.5), -1, 2, ylab='F(x)', ylim=c(0,1.2))
+abline(h=pr, v=q, lty=3, col='red')
+```
+
+Exponential distribution
+
+```{r}
+# Recall that for lambda=1 we have expected.value=standard.deviation=1
+pr <- 0.6
+q <- qexp(pr, rate=1)
+q
+
+# Quantile on the density function
+par(mfrow=c(1, 2))
+
+curve(dexp, 0, 4, ylab='f(x)')
+x <- seq(0, q, length=1000)
+y <- dexp(x)
+polygon(c(0, x, q), c(0, y, 0), col='gray')
+
+# Quantile on the cumulative distribution function
+curve(pexp, 0, 4, ylim=c(0, 1.1), ylab='F(x)')
+lines(x=c(0, q), y=c(pr, pr), lty=2, col='blue')
+lines(x=c(q, q), y=c(0, pr), lty=2, col='blue')
+par(mfrow=c(1, 1))
+```
+
+```{r}
+# we consider mu=1 and sigma=1 so that we have same mean and std of exp(1) distribution 
+pr <- 0.6
+q <- qnorm(pr, mean=1, sd=1)
+q
+# Quantile on the density function
+par(mfrow=c(1, 2))
+
+curve(dnorm(x, mean=1, sd=1), -2, 4, ylab='f(x)')
+x <- seq(-2, q, length=1000)
+y <- dnorm(x, mean=1, sd=1)
+polygon(c(-2, x, q), c(0, y, 0), col='gray')
+
+# Quantile on the cumulative distribution function
+curve(pnorm(x, mean=1, sd=1), -2, 3, ylim=c(0, 1.1), ylab='F(x)')
+lines(x=c(-2, q), y=c(pr, pr), lty=2, col='blue')
+lines(x=c(q, q), y=c(0, pr), lty=2, col='blue')
+par(mfrow=c(1, 1))
+```
+
+Compare the quantile of normal distribution with that of exponential distribution
+
+```{r}
+pr <- 0.6
+
+curve(pnorm(x, mean=1, sd=1), -2, 3, ylim=c(0, 1.1), ylab='F(x)')
+curve(pexp, -2, 3, ylim=c(0, 1.1), ylab='F(x)', add=TRUE, col='blue')
+
+abline(h=pr, lty=3, col='red', lwd=2)
+points(c(qexp(pr), qnorm(pr, mean=1, sd=1)), c(pr, pr), pch=16)
+```
+
+empirical cdf
+
+```{r}
+set.seed(123)
+x <- rexp(4)
+sort(x)
+
+plot(ecdf(x), xlim=c(0,1.75), ylim=c(0, 1.1), axes=FALSE)
+box()
+axis(2, at=c(0, 0.25, 0.5, 0.75, 1))
+axis(1, at=round(x, 3))
+```
+
+Exponential distribution: comparison between ecdf and 'exact' cdf
+
+```{r}
+set.seed(123)
+x <- rexp(30)
+plot(ecdf(x), xlim=c(0,4))
+curve(pexp, add=TRUE, col='blue')
+```
+
+normal distribution: comparison between ecdf and 'exact' cdf
+
+```{r}
+set.seed(123)
+x <- rnorm(30, mean=1, sd=1)
+plot(ecdf(x), xlim=c(-3,3))
+curve(pnorm(x, mean=1, sd=1), add=TRUE, col='blue')
+```
+
+comparison between ecdf from exponential and cdf from standard normal
+
+```{r}
+set.seed(123)
+x <- rexp(30)
+plot(ecdf(x), xlim=c(-3,3))
+curve(pnorm(x, mean=1, sd=1), add=TRUE, col='blue')
+```
+
+Empirical cdf
+
+```{r}
+set.seed(123)
+x <- rexp(30)
+qqnorm(x)
+qqline(x)
+```
+
+Comparison with different cases
+
+```{r}
+# right skewed
+
+set.seed(123)
+x <- rexp(50)
+
+par(mfrow=c(1,2))
+hist(x, freq=FALSE, col='cyan')
+qqnorm(x)
+qqline(x)
+par(mfrow=c(1,1))
+
+# left skewed
+
+set.seed(123)
+x <- -rexp(50)
+
+par(mfrow=c(1,2))
+hist(x, freq=FALSE, col='cyan')
+qqnorm(x)
+qqline(x)
+par(mfrow=c(1,1))
+
+
+# light tails
+
+set.seed(123)
+x <- runif(30)
+
+
+par(mfrow=c(1,2))
+hist(x, freq=FALSE, col='cyan')
+qqnorm(x)
+qqline(x)
+par(mfrow=c(1,1))
+
+# heavy tails
+
+set.seed(123)
+x <- rt(50, 3)
+
+par(mfrow=c(1,2))
+hist(x, freq=FALSE, col='cyan')
+qqnorm(x)
+qqline(x)
+par(mfrow=c(1,1))
+```
+
+# Data animals and z.scores
+
+```{r}
+library(MASS)
+data(Animals)
+attach(Animals)
+```
+
+```{r}
+l.body <- log10(body)
+
+
+par(mfrow=c(1, 2))
+qqnorm(body)
+qqline(body)
+qqnorm(l.body)
+qqline(l.body)
+par(mfrow=c(1,1))
+```
+
+# Faithful gayser data and bimodality
+
+```{r}
+data(faithful)
+attach(faithful)
+```
+
+```{r}
+par(mfrow=c(1,2))
+hist(waiting, freq=FALSE, col='cyan')
+qqnorm(waiting)
+qqline(waiting)
+par(mfrow=c(1,1))
+```
+
+# Probability distributions related to normal one
+
+Chi-squared distribution
+
+```{r}
+# density function with 5 degrees of freedom
+curve(dchisq(x, df=5), xlim=c(0, 20))
+```
+
+Student's t distribution
+
+```{r}
+# 5 degrees of freedom
+curve(dt(x, 5),  xlim=c(-5, 5), ylab='pdf', xlab='', col='blue', lwd=1.5)
+```
+
+Comparison with the normal distribution
+
+```{r}
+curve(dnorm, xlim=c(-5, 5), ylab='pdf', xlab='', col='red', lwd=1.5)
+curve(dt(x, 1),  add=TRUE, lty=2, col='blue', lwd=1.5)
+curve(dt(x, 4),  add=TRUE, lty=3, col='black', lwd=1.5)
+curve(dt(x, 16), add=TRUE, lty=4, col='black', lwd=1.5)
+
+
+leg.label <- c('t df = 1', 't df = 4', 't df = 16', 'Normal' )
+leg.lty   <- c(2, 3, 4, 1)
+leg.col <- c('blue', 'black', 'black',  'red')
+legend (x='topleft', y=NULL, legend=leg.label, lty=leg.lty, col=leg.col, lwd=1.5)
+```
+
+Compare boxplots
+
+```{r}
+x <- rnorm(1000)
+y <- rt(1000, 5)
+
+boxplot(x, y, names=c('normal dist.', 't dist. with 5df'), col='lightgray')
+```
+
+Density function with 5 degrees of freedom
+
+```{r}
+curve(df(x, df1=5, df2=7), xlim=c(0, 5))
+```
+
+# Linear combination of rv's and central limit theorem
+
+Mean of a sample from a normal random variable for different sample sizes
+
+```{r}
+# This function considers a random variable X~N(5,1) and plots its density function together with the density function of sample mean of n i.i.d. observations from X 
+samplingdist <- function(n) {
+  curve(dnorm(x,5,1), xlim=c(2,8), ylim=c(0,2), col=2, lwd=1.5, ylab='')
+  curve(dnorm(x,5,1/sqrt(n)), xlim=c(2,8), ylim=c(0,2), lwd=1.5,add=TRUE)
+  Sys.sleep(0.2)}
+
+# apply samplingdist() for a single value of n
+samplingdist(5)
+
+# apply the function samplingdist() for n from 1 to 20 
+# Run in terminal
+# ignore <- sapply(1:20, samplingdist)
+```
+
+Central Limit Theorem (CLT)
+
+```{r}
+# Empirical check of the CLT with exponential distribution X~Exp (1) so that E(X)=var(X)=1
+# We first consider a sample from Exp(1) and compare histogram of sample data both with true density function, that is of Exp(1) and with that of a normal distribution with same mean and variance N(1,1). 
+y <- rexp(10000)
+hist(y, prob=TRUE, main='Exp(1) vs N(0,1)', xlab='', ylab='', xlim=c(-2, 7), ylim=c(0, 1.1))
+abline(v=0)
+curve(dexp, add=TRUE, col='red', lwd=2, from=0.001, to=7)
+curve(dnorm(x, mean=1, sd=1), add=TRUE, lwd=2, col='blue')
+```
+
+```{r}
+# We now consider Y that is obtained from arithmetic mean of n i.i.d. Exp(1) random variables so that E(Y)=1, var(Y)=1/n and compare its denisty with that of N(1; 1/n) (note that sd=1/sqrt(n)) increasing values of n are considered set the value of n
+n <- 2
+
+# sample n i.i.d. values from X~Exp (1) and compute the mean
+y <- mean(rexp(n))
+
+# repeat this operation 10000 times and plot the histogram
+y <- c()
+for(i in 1:10000) y <- c(y, mean(rexp(n)))
+hist(y, prob=TRUE, main=paste('n = ', n), xlab='', ylab='')
+
+# add the density of the Normal approximation 
+curve(dnorm(x, mean=1, sd=1/sqrt(n)), add=TRUE, lwd=2, col='blue')
+```
+
+```{r}
+# implement this procedure in a function 
+CLT.check <- function(n){
+  mu.y <- 1
+  sd.y <- 1/sqrt(n)
+  y <- c()
+  for(i in 1:10000) y <- c(y, mean(rexp(n)))
+  hist(y, breaks=40, prob=TRUE, main=paste('n =', n), xlab='', ylab='', xlim=c(1-3*sd.y, 1+4*sd.y))
+  curve(dnorm(x, mean=mu.y, sd=sd.y), add=TRUE, col='blue', lwd=2)
+}
+
+
+# compare what happens for increasing values of n
+par(mfrow=c(2,3))
+set.seed(123)
+for (n in c(1, 2, 4, 20, 50, 100)) CLT.check(n)
+par(mfrow=c(1,1))
+```
+
+# Central Limit Theorem: Exercises (from Exercises_01)
+
+EXERCISE n.1
+
+```{r}
+# point a)
+mu    <- 12.01
+sigma <- 0.2
+
+# mean of n=144 bottles
+n <- 144
+var.x.bar <- sigma^2/n
+sd.x.bar  <- sqrt(var.x.bar)
+
+# note that 144=12^2
+sd.x.bar <- sigma/12
+pnorm(12, mean=mu, sd=sd.x.bar)
+
+# point b) 
+mu <- 12.3
+pnorm(12, mean=mu, sd=sd.x.bar)
+```
+
+EXERCISE n.2
+
+```{r}
+mu    <- 0.08
+sigma <- 0.01
+
+n <- 250
+
+mu.y  <- n*mu
+var.y <- n*sigma^2
+sd.y  <- sqrt(var.y)
+
+# a)
+1-pnorm(20.2, mean=mu.y, sd=sd.y)
+
+# b) 
+qnorm(0.1, mean=mu.y, sd=sd.y)
+qnorm(0.9, mean=mu.y, sd=sd.y)
+
+# c) There is not enough information: the distribution of page thickness in unknown
+```
+
+EXERCISE n.3
+
+```{r}
+x <- 0:4
+pr <- c(0.1, 0.3, 0.3, 0.2, 0.1)
+
+# expected value of X
+mu <- sum(x*pr)
+mu
+
+# variance of X
+sigma2 <- sum((x-mu)^2*pr)
+sigma2
+
+# mean of 100 days
+n <- 100
+var.x.bar <- sigma2/n
+sd.x.bar  <- sqrt(var.x.bar)
+1-pnorm(2, mean = mu, sd = sd.x.bar)
+```
+
+EXERCISE n.9
+
+```{r}
+q.95 <- qnorm(0.95)
+q.95
+
+n <- (q.95*0.5/0.1)^2
+n
+```
+
+EXERCISE n.10
+
+```{r}
+n <- 100
+pr <- 0.3
+
+# exact probability form Binomial distribution
+1 - pbinom(35, n, pr)
+
+# approximate probability using the CLT
+mu.y <- n*pr
+sigma2.y <- n*pr*(1-pr) 
+
+1 - pnorm(35, mean=mu.y, sd=sqrt(sigma2.y))
+
+
+# compare the exact Binomial pdf with approximating Normal pdf
+x <- 10:50
+pr.x <- dbinom(x, n, pr)
+plot(x, pr.x, type='h', xlab='', ylab='', main='')
+curve(dnorm(x,  mean=mu.y, sd=sqrt(sigma2.y)), add=TRUE, lwd=2, lty=2, col='red')
+
+# note that a better approximation could be obtained by applying a 'continuity correction' that is done by replacing 35 with 35.5
+1 - pnorm(35.5, mean=mu.y, sd=sqrt(sigma2.y))
+```
+
+# Loading data into R
+
+```{r}
+setwd('/home/hieu/BDMA/SL/')
+
+temp.data <- read.table('normtemp-data/normtemp.txt', head=TRUE)
+attach(temp.data)
+temp.C <- (temperature-32)*5/9
+
+par(mfrow=c(1, 2))
+qqnorm(temp.C, main='body temperature')
+qqline(temp.C)
+
+
+par(mfrow=c(1,1))
+```
+
+Missing values
+
+```{r}
+# default na.strings = 'NA'
+mydata <- read.table('normtemp-data/normtemp-with-NA.txt', head=TRUE)
+
+mydata$temperature[1:10]
+is.vector(mydata$temperature)
+is.character(mydata$temperature)
+is.numeric(mydata$temperature)
+
+# set na.strings='*'
+mydata <- read.table('normtemp-data/normtemp-with-NA.txt', head=TRUE, na.strings = '*')
+
+mydata$temperature[1:10]
+is.vector(mydata$temperature)
+is.character(mydata$temperature)
+is.numeric(mydata$temperature)
+```
+
+Factors (i.e. data type for categorical variables)
+
+```{r}
+is.vector(mydata$gender)
+is.character(mydata$gender)
+is.factor(mydata$gender)
+
+# define a factor
+gender.f <- as.factor(mydata$gender)
+is.factor(gender.f)
+```
+
+```{r}
+# different method  (i.e. behavior) for printing character vectors and factors
+mydata$gender[1:10]
+gender.f[1:10]
+
+# different method (i.e. behavior) for summary() of character vectors and factors
+summary(mydata$gender)
+summary(gender.f)
+```
+
+```{r}
+# modify directly the attributes of the data.frame
+mydata$gender <- as.factor(mydata$gender)
+```
+
+```{r}
+# ordered factor 
+mydata <- read.table('normtemp-data/normtemp-with-ordinal-var.txt', head=TRUE, comment.char = '#')
+
+is.character(mydata$age)
+is.factor(mydata$age)
+
+# convert into a factor (categorical variable)
+age.f <- factor(mydata$age)
+is.vector(age.f)
+is.factor(age.f)
+```
+
+```{r}
+# check whether it is recognized as ordered
+is.ordered(age.f)
+
+# the levels are printed in arbitrary order 
+age.f[1:10]
+
+# convert into an ordered factor
+age.fo <- factor(mydata$age, ordered=TRUE, levels=c('<30', '[30, 50)', '[50, 70)', '>=70'))
+
+# the print() function now highlights the order of levels
+age.fo[1:10]
+```
+
+```{r}
+is.ordered(age.fo)
+summary(age.f)
+summary(age.fo)
+
+# modify directly the data.frame
+mydata$age <- factor(mydata$age, ordered=TRUE, levels=  c('<30', '[30, 50)', '[50, 70)', '>=70' ))
+```

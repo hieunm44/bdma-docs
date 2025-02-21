@@ -1,0 +1,75 @@
+---
+title: "R 05"
+output: html_notebook
+---
+
+# Inference for a Proportion
+
+Vitamin C example
+
+```{r}
+x <- 302
+n <- 407
+
+p.hat <- x/n
+p.hat
+
+se.hat <- sqrt(p.hat*(1-p.hat)/n)
+se.hat
+
+ic.upper <- p.hat + 1.96*se.hat
+ic.lower <- p.hat - 1.96*se.hat
+round(c(ic.lower, ic.upper), 3)
+
+# R-function for exact CI
+binom.test(x, n, conf.level=0.95)
+
+# R-function for approximate CI
+prop.test(x, n, conf.level=0.95)
+```
+
+Quality control example (from slides 121-122)
+
+```{r}
+n <- 40
+x <- 11
+
+p.hat <- x/n
+
+p.0 <- 0.25
+
+# Note that the standard error under the null hypothesis is computed using p.0 rather than p.hat
+se.0 <- sqrt(p.0*(1-p.0)/n)
+
+z <- (p.hat-p.0)/se.0
+z
+p.value <- 1-pnorm(z)
+p.value
+```
+
+```{r}
+# R-function for exact test
+binom.test(x, n, p=0.25, alternative='greater')
+
+# R-function for approximate p.value
+prop.test(x, n, p=0.25, alternative='greater')
+```
+
+```{r}
+# mean of exponential
+x <- c(6, 0, 1, 7, 3, 5, 2, 1)
+n <- length(x)
+n
+
+x.bar <- mean(x)
+theta.hat <- x.bar
+
+se.hat <- sqrt(theta.hat^2/n)
+
+ic.upper <- theta.hat + 1.96*se.hat
+ic.lower <- theta.hat - 1.96*se.hat
+round(c(ic.lower, ic.upper), 3)
+
+# a confindence interval for lambda=1/thetais given by 
+round(c(1/ic.upper, 1/ic.lower), 3)
+```

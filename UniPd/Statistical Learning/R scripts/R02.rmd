@@ -1,0 +1,235 @@
+---
+title: "R 02"
+output: html_notebook
+---
+
+# Bernoulli Random Variable
+
+```{r}
+# Bernoulli trial with probability of success equal to 0.7
+urn <- c(rep('SUCCESS', 7), rep('FAILURE', 3))
+urn
+
+# Simulate random extraction from a urn
+sample(urn, 1)
+
+# n independent replications of a Bernoulli trial
+n <- 4
+sample(urn, size=n, replace = TRUE)
+
+# Random seed: state of the random number generator in R
+set.seed(321)
+sample(urn, size=n, replace = TRUE)
+```
+
+Bernoulli random variable with prob=0.7
+
+```{r}
+urn <- c(rep(1, 7), rep(0, 3))
+urn
+
+# one observation 
+sample(urn, 1) 
+
+# n independent realizations
+n <- 10
+sample(urn, size=n, replace = TRUE)
+```
+
+# Binomial Distribution
+
+Generate one realization from a Binomial random variable n=10 and prob=0.7
+
+```{r}
+n <- 10
+n.iid.bernoulli <- sample(urn, size=n, replace = TRUE)
+n.iid.bernoulli
+sum(n.iid.bernoulli)
+```
+
+This can be done with the rbinom() function
+
+```{r}
+# one random value
+rbinom(1, size=10, prob=0.7)
+
+# four random values
+rbinom(4, size=10, prob=0.7)
+```
+
+Binomial pdf and cdf
+
+```{r}
+p <- 0.7
+n <- 10
+
+# p(X=3)
+dbinom(3, n, p)
+
+# probability mass function 
+x <- 0:n
+pdf <- dbinom(x, n, p)
+pdf
+
+sum(pdf) # check that the sum is 1
+```
+
+a plot of the probability mass function
+
+```{r}
+plot(x, pdf, xlab = 'x', ylab = 'p(x)', type = 'h')
+
+# Function expression() to improve the quality of axis label (xlab and ylab)
+plot(x, pdf, xlab = expression(x), ylab = expression(p(x)), type = 'h')
+```
+
+Rules for using the expression() function
+
+```{r}
+# Run in terminal
+# demo(plotmath)
+```
+
+```{r}
+# P(X<=3)
+pbinom(3, n, p)
+
+# cumulative distribution function
+x <- 0:n
+cdf <- pbinom(x, n, p)
+cdf
+
+```
+
+Plot cumulative distribution function
+
+```{r}
+# basic step function
+n <- 10
+x <- 0:n
+cdf <- pbinom(x, n, p)
+out.step <- stepfun(x, c(0, cdf))
+out.step
+
+plot(out.step)
+
+# nicer output with more graphical parameters
+
+plot(out.step,
+     pch=20,
+     vertical=FALSE,
+     xlab=expression(x),
+     ylab=expression(F(x)==P(X<=x)),
+     main='')
+```
+
+# EXAMPLE: AA Airlines
+
+User defined functions
+
+```{r}
+my.square <- function(a){
+  b <- a*a
+  return(b)
+}
+
+my.square
+
+my.square(2)
+x <- my.square(2)
+x
+```
+
+'for' loops
+
+```{r}
+# example 1
+for(i in 1:5) print(i)
+
+# example 2
+x <- rbinom(5, size=10,  p=0.5)
+for (k in x) print(k)
+
+# example 3
+superheroes <- c('superman', 'batman', 'spiderman')
+for (name in superheroes ) print(name)
+```
+
+Apply a function to a vector
+
+```{r}
+a <- c(1, 3, 5, 7)
+
+# many (but not all) functions  work also with vectors 
+x <- my.square(a)
+x
+
+# in alternative use a cycle
+x <- c()
+for(i in a) x <- c(x, my.square(i))
+x
+
+# sapply() function: the same ascycle for above but more efficient
+x <- sapply(a, FUN = my.square)
+x
+```
+
+Plot the binomial mass functions for different values of probability parameter
+
+```{r}
+# function that produces a plot of binomial(10, p)
+binom.plot <- function(p) {
+  plot(0:10, dbinom(0:10,10,p), ylim=c(0,0.5), type='h')
+  Sys.sleep(0.1)
+  }
+
+# plot for p=0.2
+binom.plot(0.2)
+
+# plot for p=0.8
+binom.plot(0.8)
+
+# 100 equispaced probabilities between 0 and 1
+p.vec <- seq(0, 1, length=100)
+
+# Run in terminal
+# iterate the plot over the values in p.vec 
+# for (p in p.vec) binom.plot(p)
+
+# the same can be done with teh sapply() function
+# ignore <- sapply(p.vec, binom.plot)
+```
+
+Another example: behavior of binomial as n increases function for binomial(n, 0.5)
+
+```{r}
+# Run in terminal
+# binom.plot <- function(n) {
+#   plot(0:n, dbinom(0:n,n,0.5), type='h')
+#   Sys.sleep(0.1)
+# }
+# 
+# ignore <- sapply(1:100, binom.plot)
+```
+
+# Poisson Distribution
+
+```{r}
+yl <- expression(p[Y](y))
+
+par(mfrow=c(2,2))
+
+y <- 0:7
+plot (y, dpois(y,1), xlab='y', ylab=yl, main=expression(lambda==1), type='h')
+
+y <- 0:10
+plot (y, dpois(y,4), xlab='y', ylab=yl, main=expression(lambda==4), type='h')
+
+y <- 6:26
+plot (y, dpois(y,16), xlab='y', ylab=yl,main=expression(lambda==16), type='h')
+
+y <- 44:84
+plot (y, dpois(y,64), xlab='y', ylab=yl,main=expression(lambda==64), type='h')
+
+par(mfrow=c(1,1))
+```

@@ -1,0 +1,344 @@
+---
+title: "R 06 Exercise"
+output: html_notebook
+---
+
+# Two sample t.test
+
+### Sec 6.7 Ex 1
+
+```{r}
+# alternative hypothesis
+# H_1: mu.b > mu.a
+
+# data 
+Da <- c(1.0, 2.0, 1.2, 3.0)
+Db <- c(3.0, 3.2, 2.6, 3.4)
+
+# compute summary statistics
+n.a <- length(Da)
+n.a
+
+n.b <- length(Db)
+n.b
+
+m.a <- mean(Da)
+m.a
+
+m.b <- mean(Db)
+m.b
+
+v.a <- var(Da)
+v.a
+
+v.b <- var(Db)
+v.b
+```
+
+Test equality of variances
+
+```{r}
+# critical values
+qf(0.025, n.a-1, n.b-1)
+qf(0.975, n.a-1, n.b-1)
+
+# observed value of the test statistic
+t.obs <- v.a/v.b
+t.obs
+
+# compute the p.value
+(1- pf(t.obs, n.a-1, n.b-1))+pf(1/t.obs, n.a-1, n.b-1)
+
+# compare with the results of the built-in function
+var.test(Da, Db)
+```
+
+Test for the comparison of means
+
+```{r}
+# compute the pooled variance
+v.pooled <- ((n.a-1)*v.a + (n.b-1)*v.b)/(n.a+n.b-2)
+
+# compute the estimated standard error of the difference
+se.hat <- sqrt(v.pooled*(1/n.a+1/n.b))
+
+# observed value of the test statistic
+t.obs <- (m.b-m.a)/se.hat
+t.obs
+
+# compute the p.value  (right sided alternative)
+p.value <- 1 - pt(t.obs, df=n.a+n.b-2) 
+p.value
+
+# compare the results with the built-in function
+t.test(Db, Da, alt='g', var.equal = TRUE)
+```
+
+### Sec 6.7 Ex 2
+
+```{r}
+# alternative hypothesis
+# H_1: mu.d != mu.o
+
+# data 
+Dd <- c(269.0, 249.3, 255.2, 252.7, 247.0, 261.6)
+Do <- c(268.8, 260.0, 273.5, 253.9, 278.5, 289.4, 261.6, 280.2)
+
+# compute summary statistics 
+n.d <- length(Dd)
+n.d 
+
+n.o <- length(Do)
+n.o
+
+m.d <- mean(Dd)
+m.d
+
+m.o <- mean(Do)
+m.o
+
+v.d <- var(Dd)
+v.d
+
+v.o <- var(Do)
+v.o
+```
+
+Test equality of variances
+
+```{r}
+# critical values
+qf(0.025, n.d-1, n.o-1)
+qf(0.975, n.d-1, n.o-1)
+
+# observed value of the test statistic
+t.obs <- v.d/v.o
+t.obs
+
+# p.value
+(1- pf(1/t.obs,  n.o-1, n.d-1))+pf(t.obs, n.d-1, n.o-1)
+
+# compare the result with the built-in function
+var.test(Dd, Do)
+```
+
+Test for the comparison of means
+
+```{r}
+# compute the pooled variance
+v.pooled <- ((n.d-1)*v.d + (n.o-1)*v.o)/(n.d+n.o-2)
+
+# compute the estimated standard error of the difference
+se.hat <- sqrt(v.pooled*(1/n.d+1/n.o))
+
+# observed value of the test statistic
+t.obs <- (m.d-m.o)/se.hat
+t.obs
+
+# p.value (two sided alternative)
+p.value <- 2*pt(-abs(t.obs), df=n.d+n.o-2) 
+p.value
+
+# compare with the built-in function
+t.test(Dd, Do, alt="t", var.equal = TRUE)
+```
+
+# t.test for paired data
+
+### Sec 6.8 Ex 1
+
+```{r}
+# H_1: mu.b != mu.g
+
+# Diff = mu.b-mu.g
+# H_1: mu.Diff !=0
+
+# input data and compute the difference
+Db <- c(2.23, 1.68, 1.96, 2.81, 1.14, 3.20, 2.33, 4.06, 2.92, 2.92, 2.83, 3.45, 2.72, 3.74) 
+Dg <- c(1.42, 1.95, 2.58, 2.25, 1.21, 3.01, 2.76, 3.65, 2.89, 2.85, 2.44, 3.11, 2.64, 2.82)
+
+Diff <- Db-Dg
+
+# compute summary statistics
+n <- length(Diff)
+n
+
+m <- mean(Diff)
+m
+
+s <- sd(Diff)
+s
+```
+
+```{r}
+# observed value of the test statistic
+# and p.value
+
+t.obs <- m/(s/sqrt(n))
+t.obs
+
+p.value <- 2*pt(-abs(t.obs), df=n-1)
+p.value
+
+# compare the result with the built-in R function
+t.test(Db, Dg, paired=TRUE)
+```
+
+### Sec 6.8 Ex 2
+
+```{r}
+# H_1: mu.a > mu.b
+
+# Diff = mu.a-mu.b
+# H_1: mu.Diff > 0
+
+# input data and compute the difference
+Da <- c(92.9, 101.5, 74.3, 95.0, 91.4, 80.6) 
+Do <- c(86.3, 97.3, 79.8, 98.1, 82.1, 84.5)  
+
+Diff <- Da-Do
+
+# compute summary statistics
+n <- length(Diff)
+n
+
+m <- mean(Diff)
+m
+
+s <- sd(Diff)
+s
+```
+
+```{r}
+# observed value of the test statistic
+# and p.value
+
+t.obs <- m/(s/sqrt(n))
+t.obs
+
+p.value <- 1-pt(t.obs, df=n-1)
+p.value
+
+# compare the result with the built-in R function
+t.test(Da, Do, alternative='greater', paired=TRUE)
+```
+
+### Sec 6.8 Ex 6
+
+```{r}
+# H_1: mu.a != mu.b
+
+# Diff = mu.a-mu.b
+# H_1: mu.Diff !=0
+
+# input data and compute the difference
+Da <- c(27.2, 18.1, 27.2, 19.7, 24.5, 22.1) 
+Db <- c(24.1, 19.3, 26.8, 20.1, 27.6, 29.8)
+
+Diff <- Da-Db
+
+# compute summary statistics
+n <- length(Diff)
+n
+
+m <- mean(Diff)
+m
+
+s <- sd(Diff)
+s
+```
+
+```{r}
+# observed value of the test statistic
+# and p.value
+
+t.obs <- m/(s/sqrt(n))
+t.obs
+
+p.value <- 2*pt(-abs(t.obs), df=n-1)
+p.value
+
+# compare the result with the built-in R function
+t.test(Da, Db, paired=TRUE)
+```
+
+# Test for the difference of proportions
+
+### Sec 6.6 Ex 1
+
+```{r}
+# H_1: pi.2 > pi.1
+#
+# equivalently
+# H_1: pi.2-pi.1 > 0
+
+# Data
+n1 <- 1000
+x1 <- 960
+
+n2 <- 600
+x2 <- 582
+```
+
+```{r}
+# observed value of the test statistics
+pi1.hat <- x1/n1
+pi1.hat
+
+pi2.hat <- x2/n2
+pi2.hat
+
+pi.pooled <- (x1+x2)/(n1+n2)
+
+se.hat <- sqrt(pi.pooled*(1-pi.pooled)*(1/n1+1/n2))
+se.hat
+
+t.obs <- (pi2.hat-pi1.hat)/se.hat
+t.obs
+
+p.value <- 1-pnorm(t.obs)
+p.value
+
+# R-function for the comparison of proportions
+prop.test(c(x2, x1), c(n2, n1), alternative='greater')
+```
+
+### Sec 6.6 Ex 7
+
+```{r}
+# H_1: pi.r > pi.h
+#
+# equivalently
+# H_1: pi.r-pi.h > 0
+
+# Data
+
+nr <- 1200
+xr <- 20
+
+nh <- 1500
+xh <- 15
+```
+
+```{r}
+# observed value of the test statistics
+pir.hat <- xr/nr
+pir.hat
+
+pih.hat <- xh/nh
+pih.hat
+
+pi.pooled <- (xr+xh)/(nr+nh)
+
+se.hat <- sqrt(pi.pooled*(1-pi.pooled)*(1/nr+1/nh))
+se.hat
+
+t.obs <- (pir.hat-pih.hat)/se.hat
+t.obs
+
+p.value <- 1-pnorm(t.obs)
+p.value
+
+# R-function for the comparison of proportions
+prop.test(c(xr, xh), c(nr, nh), alternative='greater')
+```

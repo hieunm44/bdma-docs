@@ -1,0 +1,496 @@
+---
+title: "R 01"
+output: html_notebook
+---
+
+```{r}
+library(MASS)
+data(Cars93)
+attach(Cars93)
+```
+
+# Frequency tables, pie charts and bar charts
+
+Frequency table
+
+```{r}
+table(Type)
+freq.tb.Type <- table(Type)
+freq.tb.Type
+```
+
+Relative frequency table
+
+```{r}
+n <- length(Type)
+rel.freq.tb.Type <- freq.tb.Type/n
+rel.freq.tb.Type
+
+round(rel.freq.tb.Type, digits=2)
+```
+
+Pie chart
+
+```{r}
+pie(freq.tb.Type)
+```
+
+Bar chart
+
+```{r}
+barplot(freq.tb.Type)
+barplot(rel.freq.tb.Type)
+```
+
+More than one variable:
+
+```{r}
+tb.Origin.Type <- table(Origin, Type)
+tb.Origin.Type
+
+tb.Origin.Type['USA', 'Large']
+
+barplot(tb.Origin.Type)
+barplot(tb.Origin.Type, beside=TRUE)
+```
+
+Add a legend
+
+```{r}
+barplot(tb.Origin.Type, beside=TRUE, legend=TRUE)
+```
+
+# Histograms
+
+```{r}
+Rear.seat.room.cm <- Rear.seat.room * 2.54
+hist(Rear.seat.room.cm)
+```
+
+Making the histogram look nicer: arguments xlab, ylab, main and col
+
+```{r}
+hist(Rear.seat.room.cm, xlab='cm', ylab='', main='Rear Seat Room', col='orange')
+```
+
+It may be convenient to define graphical parameters (such as text options) of a plotting function as variables to be used in all instances of function.
+
+```{r}
+rsr     <- 'Rear Seat Room'
+rsr.x   <- 'cm'
+rsr.y   <- ''
+rsr.col <- 'orange'
+```
+
+Function `par()` to split graphic panel and specify number of bins: argument breaks.
+
+```{r}
+par(mfrow=c(1,2))
+
+hist(Rear.seat.room.cm, xlab=rsr.x, ylab=rsr.y,  main=rsr, col=rsr.col)
+  
+hist(Rear.seat.room.cm, breaks=30, xlab=rsr.x, ylab=rsr.y,  main=rsr, col=rsr.col)
+
+par(mfrow=c(1,1))
+```
+
+Density vs frequency histogram: two equivalent ways to produce a density histogram.
+
+```{r}
+hist(Rear.seat.room.cm, freq=FALSE) 
+hist(Rear.seat.room.cm, probability=TRUE) 
+```
+
+Specify the endpoints of the class intervals: function `range` and argument `na.rm`
+
+```{r}
+range(Rear.seat.room.cm)
+range(Rear.seat.room.cm, na.rm=TRUE)
+```
+
+Compare the histogram under four conditions:\
+1. equispaced vs non-equispaced bins\
+2. frequency vs density histogram
+
+```{r}
+bins <- c(48, 65, 70, 75,  92)
+
+par(mfrow=c(2,2))
+
+hist(Rear.seat.room.cm,
+     freq=FALSE,
+     main='density/equispaced',
+     xlab='',
+     ylab='',
+     col=rsr.col)
+  
+hist(Rear.seat.room.cm,
+     freq=TRUE,
+     main='frequency/equispaced',
+     xlab='',
+     ylab='',
+     col=rsr.col)
+
+hist(Rear.seat.room.cm,
+     freq=FALSE,
+     breaks=bins,
+     main='density/non-equispaced',
+     xlab='',
+     ylab='',
+     col=rsr.col)
+  
+hist(Rear.seat.room.cm,
+     freq=TRUE,
+     breaks=bins,
+     main='frequency/non-equispaced',
+     xlab='',
+     ylab='',
+     col=rsr.col)
+ 
+par(mfrow=c(1,1))
+```
+
+Output of the function `hist()`:
+
+```{r}
+hist(Rear.seat.room.cm)
+
+h <- hist(Rear.seat.room.cm)
+h
+
+is.list(h)
+
+h$counts
+h[[2]]
+
+class(h)
+```
+
+The generic function `plot()` has a specific method for objects of class 'histogram':
+
+```{r}
+plot(h)
+```
+
+# Density Plot
+
+```{r}
+dens <- density(Rear.seat.room.cm, na.rm=TRUE) # kernel estimation of the density
+plot(dens, main='Kernel Density') # plot the estimate
+```
+
+Compare density plot with histogram
+
+```{r}
+hist(Rear.seat.room.cm, freq=FALSE)
+lines(dens, lwd=2)
+```
+
+Change the bandwidth
+
+```{r}
+dens0.5 <- density(Rear.seat.room.cm, adjust=0.5, na.rm=TRUE)
+
+hist(Rear.seat.room.cm, freq=FALSE)
+lines(dens0.5, col='red',  lwd=2)
+lines(dens, col='blue', lwd=2)
+```
+
+Take a look at the object `dens`
+
+```{r}
+class(dens)
+
+is.list(dens)
+dens$x[1:10]
+dens$y[1:10]
+```
+
+# Numerical Summaries
+
+Arithmetic mean
+
+```{r}
+mean(Rear.seat.room.cm)
+mean(Rear.seat.room.cm, na.rm=TRUE)
+```
+
+Removing NA's
+
+```{r}
+# using the function is.na()
+is.na(Rear.seat.room.cm)
+Rear.seat.room.cm[!is.na(Rear.seat.room.cm)]
+
+# using the function na.omit()
+na.omit(Rear.seat.room.cm)
+Rear.seat.room.cm.cleaned <- na.omit(Rear.seat.room.cm)
+```
+
+Deviations from mean
+
+```{r}
+bar.x <- mean(Rear.seat.room.cm.cleaned)
+d <- Rear.seat.room.cm.cleaned - bar.x
+
+# Check that deviations from the mean are centered about zero
+hist(d)
+sum(d)
+```
+
+Median
+
+```{r}
+median(Rear.seat.room.cm.cleaned)
+sort(Rear.seat.room.cm.cleaned)[46]
+```
+
+Arithmetic mean is highly sensitive to data points that are significantly different from the rest of the dataset, either much larger or much smaller.
+
+```{r}
+data.points <- 1:10
+data.points
+mean(data.points)
+median(data.points)
+
+data.points[10] <- 100
+data.points
+mean(data.points)
+median(data.points)
+
+data.points[10] <- 1000
+data.points
+mean(data.points)
+median(data.points)
+```
+
+Variance and standard deviation
+
+```{r}
+x <- Rear.seat.room.cm.cleaned
+s2 <- sum((x-mean(x))^2)/(length(x)-1)
+var(x)
+
+sd(x)
+sqrt(s2)
+```
+
+Quantiles
+
+```{r}
+quantile(Rear.seat.room.cm.cleaned, 0.3)
+quantile(Rear.seat.room.cm.cleaned, c(0.3, 0.6))
+quantile(Rear.seat.room.cm.cleaned)
+
+# Interquartile range
+IQR(Rear.seat.room.cm.cleaned)
+
+# Five-number summary (and mean)
+summary(Rear.seat.room.cm.cleaned)
+```
+
+# Scatterplots and Boxplots
+
+Boxplot
+
+```{r}
+boxplot(Rear.seat.room.cm.cleaned)
+boxplot(Min.Price)
+```
+
+Side-by-side boxplots
+
+```{r}
+Rear.seat.USA     <- Rear.seat.room.cm.cleaned[Origin=='USA']
+Rear.seat.non.USA <- Rear.seat.room.cm.cleaned[Origin=='non-USA']
+
+boxplot(Rear.seat.USA, Rear.seat.non.USA)
+```
+
+Model formula syntax
+
+```{r}
+boxplot(Rear.seat.room.cm.cleaned ~ Origin[!is.na(Rear.seat.room.cm)])
+
+boxplot(Rear.seat.room.cm.cleaned~Type[!is.na(Rear.seat.room.cm)])
+boxplot(Length~Type)
+
+boxplot(Min.Price~Origin)
+
+detach(Cars93)
+```
+
+'Old faithful' data and scatterplots
+
+```{r}
+data('faithful')
+attach(faithful)
+```
+
+EDA of waiting time
+
+```{r}
+summary(waiting)
+par(mfrow=c(1, 2))
+hist(waiting, col='orange', freq=FALSE, main='')
+boxplot(waiting, col='lightgray')
+par(mfrow=c(1,1))
+```
+
+EDA of eruption duration
+
+```{r}
+summary(eruptions)
+
+par(mfrow=c(1, 2))
+hist(eruptions, col='orange', prob=TRUE, main='')
+boxplot(eruptions, col='lightgray')
+par(mfrow=c(1,1))
+
+summary(faithful)
+```
+
+Scatterplots: function `plot()`
+
+```{r}
+plot(eruptions, waiting)
+plot(waiting ~ eruptions)
+```
+
+Function `plot()`, choice of symbol: argument pch
+
+```{r}
+plot(1:20)
+plot(1:20, pch='A')
+plot(1:20, pch=16)
+plot(1:20, pch=1:20)
+plot(1:20, pch=3)
+
+# Function plot(), choice of symbol: argument col
+plot(1:20, col='red', pch=16)
+colors()
+```
+
+Final scatterplot
+
+```{r}
+lx <- 'Eruption time (min)'
+ly <- 'Waiting time to next eruption (min)'
+lmain <- 'faithful data: Eruptions of Old Faithful'
+
+plot(eruptions, waiting, xlab=lx, ylab=ly, main=lmain, pch='+')
+
+# LOESS=LOcally Estimated Scatterplot Smoothing
+int.line <- loess.smooth(eruptions, waiting, span=2/3) # span=2/3 is the default value
+lines(int.line,  col='blue', lty=1, lwd=2)
+
+int.line # this is a list with the x and y values
+
+# smoother curve: span=2
+int.line.2 <- loess.smooth(eruptions, waiting, span=2) 
+lines(int.line.2,  col='red', lty=2, lwd=2)
+
+# rougher curve: span=1/5
+int.line.0.20 <- loess.smooth(eruptions, waiting, span=1/5) 
+lines(int.line.0.20,  col='violet', lty=4, lwd=4)
+
+# Add a legend
+legend(x=1.5, y=95, 
+       legend=c('smoothing=1/5','smoothing=2/3', 'smoothing=2'), 
+       col=c('violet', 'blue', 'red'),
+       lty=c(4,2,1), 
+       lwd=c(4,2,2)
+       )
+
+# Alternative way for legend position
+# 'bottomright', 'bottom', 'bottomleft', 'left', 
+# 'topleft', 'top', 'topright', 'right',  'center'
+legend('topleft', y=NULL,
+       legend=c('smoothing=1/5','smoothing=2/3', 'smoothing=2'), 
+       col=c('violet', 'blue', 'red'),
+       lty=c(4,2,1), 
+       lwd=c(4,2,2)
+       )
+
+# size of the legend
+legend('topleft', , y=NULL, cex=0.8,
+       legend=c('smoothing=1/5','smoothing=2/3', 'smoothing=2'), 
+       col=c('violet', 'blue', 'red'),
+       lty=c(4,2,1), 
+       lwd=c(4,2,2)
+       )
+```
+
+`scatter.smooth()` function: `loess.smooth()`+`plot()`
+
+```{r}
+scatter.smooth(eruptions, waiting, pch='+')
+```
+
+old faithful data are time series
+
+```{r}
+n <- length(waiting)
+time <- 1:n
+
+plot(time, waiting)
+```
+
+First 100 time points and plot with 'line'
+
+```{r}
+plot(time[1:100], waiting[1:100], type='l')
+
+
+waiting.next <- waiting[-1]
+waiting.previous <- waiting[-n]
+
+plot(waiting.previous, waiting.next, pch='+')
+
+abline(h=70, lty=2, col='red')
+abline(v=70, lty=2, col='red')
+
+detach(faithful)
+```
+
+# 'Animals' data and transformations
+
+```{r}
+library(MASS)
+data(Animals)
+attach(Animals)
+```
+
+```{r}
+summary(body)
+hist(body, prob=TRUE)
+hist(body, breaks=20, prob=TRUE, col=7)
+```
+
+Logarithmic transformation
+
+```{r}
+lbody <- log10(body)
+summary(lbody)
+hist(lbody, prob=TRUE, col=7)
+
+# Inverse transformation
+10^mean(lbody)
+summary(body)
+```
+
+Geometric mean
+
+```{r}
+n <- length(body)
+prod(body)^(1/n)
+```
+
+Scatterplot
+
+```{r}
+plot(body, brain, pch='+')
+
+lbrain <- log10(brain)
+plot(lbody, lbrain, pch=16)
+```

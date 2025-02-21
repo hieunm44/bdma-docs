@@ -1,0 +1,338 @@
+---
+title: "R 07"
+output: html_notebook
+---
+
+# Comparison of estimators based on variance/standard errors
+
+Following the body-temperature example, we assume the population normally distributed
+
+```{r}
+mu <- 36.75
+sigma <- 0.45
+
+# we consider three different estimators of mu:
+#
+# mu.hat.1 = sample mean
+# mu.hat.2 = sample median
+# mu.hat.3 = midpoint of the range of the sample
+#
+# hence simulate the sampling distributions of these 
+# three estimators based on 10^4 samples with n=16
+
+samplesize <- 16
+
+mu.hat.1 <- c()
+mu.hat.2 <- c()
+mu.hat.3 <- c()
+
+for (i in 1:10000) {
+  x <- rnorm(samplesize, mean=mu, sd=sigma)
+  mu.hat.1 <- c(mu.hat.1, mean(x))
+  mu.hat.2 <- c(mu.hat.2, median(x))
+  mu.hat.3 <- c(mu.hat.3, mean(range(x)))
+}
+```
+
+```{r}
+par(mfrow=c(2,2)) 
+hist(mu.hat.1, main=expression(hat(mu)[1]~(mean~of~values)), freq=F, col="cyan", ylab="")
+hist(mu.hat.2, main=expression(hat(mu)[2]~(median~of~values)), freq=F, col="cyan", ylab="")
+hist(mu.hat.3, main=expression(hat(mu)[3]~(mean~of~range)), freq=F, col="cyan", ylab="")
+d1 <- density(mu.hat.1)
+d2 <- density(mu.hat.2)
+d3 <- density(mu.hat.3)
+plot(d1, lwd=2, main="", xlim=range(mu.hat.3), xlab="", ylab="")
+abline(v=mu, lty=2)
+lines(d2, lwd=2, col="blue")
+lines(d3, lwd=2, col="red")
+par(mfrow=c(1,1))
+```
+
+```{r}
+# comparison of empirical distributions 
+plot(d1, lwd=2, main="", xlim=range(mu.hat.3), xlab="", ylab="")
+legend("topleft", lty=c(1,1,1), col=c("black", "blue", "red"), cex=0.75, legend=c("mean", "median", "mid-range"))
+abline(v=mu, lty=2)
+lines(d2, lwd=2, col="blue")
+lines(d3, lwd=2, col="red")
+```
+
+```{r}
+# compute the mean and the standard deviations 
+# (i.e. the standard errors) of the estimators
+mean(mu.hat.1)
+sd(mu.hat.1)
+
+mean(mu.hat.2)
+sd(mu.hat.2)
+
+mean(mu.hat.3)
+sd(mu.hat.3)
+```
+
+# MUON DECAY EXAMPLE
+
+```{r}
+# numerical computation of MLE
+# and of its asymptotic distribution
+muon.data <- c(0.41040018,  0.91061564, -0.61106896,  0.39736684,  0.37997637, 0.34565436,
+               0.01906680, -0.28765977, -0.33169289,  0.99989810, -0.35203164, 0.10360470,
+               0.30573300,  0.75283842, -0.33736278, -0.91455101, -0.76222116, 0.27150040,
+               -0.01257456,  0.68492778, -0.72343908,  0.45530570,  0.86249107, 0.52578673,
+               0.14145264,  0.76645754, -0.65536275,  0.12497668,  0.74971197, 0.53839119)
+
+# function for density of muon decay
+dmuon <- function(x, alpha){
+  d <- (1+alpha*x)/2
+  return(d)
+}
+
+# compute dmuon() for some values of x
+x <- muon.data[1]
+x
+dmuon(x, alpha=0.7)
+
+# this function works also if x is a vector
+x <- muon.data[1:4]
+dmuon(x, alpha=0.7)
+```
+
+```{r}
+# plot the density for some alpha values
+a <- 0.7 # positive
+a <- 0   # zero
+a <- -0.7 # negative
+
+curve(dmuon(x , alpha=a), from=-1, to=1, ylab=expression(p(x)), main='Density for muon decay')
+```
+
+```{r}
+# function for log-likelihood
+lmuon <- function(alpha, data){
+  l <- sum(log(1+alpha*data))-length(data)*log(2)
+  return(l)
+}
+
+# compute for some value of alpha
+lmuon(-0.4, data=muon.data)
+
+# this function doesn't work as expected  if one tries to use  it with a vector of values or plot a curve. 
+# alpha <- c(-0.4, 0.2, 0.7)
+# lmuon(alpha, data=muon.data)
+# 
+# curve(lmuon(x, data=muon.data), -1, 1)
+
+# we need to "vectorize" the function
+lmuon.v <- function(alpha, data){
+  l <- c()
+  for (a in alpha) l <- c(l, lmuon(a, data))
+  return(l)
+}
+
+lmuon(-0.4, data=muon.data)
+alpha <- c(-0.4, 0.2, 0.7)
+lmuon.v(alpha, data=muon.data)
+
+xl <- expression(alpha)
+yl <- expression(l(alpha))
+mt <- "log-likelihood for muon decay"
+
+curve(lmuon.v(x, data=muon.data), from=-1, to=1, xlab=xl, ylab=yl, main=mt)
+
+# "Vectorize" function
+lmuon.v <- Vectorize(FUN=lmuon, vectorize.args = "alpha")
+lmuon.v
+
+lmuon.v(alpha, data=muon.data)
+curve(lmuon.v(x, data=muon.data), from=-1, to=1, xlab=xl, ylab=yl, main=mt)
+```
+
+```{r}
+# score function
+smuon <- function(alpha, data){
+  l <- sum(data/(1+alpha*data))
+  return(l)
+}
+
+smuon.v <- Vectorize(FUN=smuon, vectorize.args = "alpha")
+curve(smuon.v(x, data=muon.data), -0.8, 1, xlab=xl)
+abline(h=0, lty=2)
+```
+
+# Built-in functions for root/optimization
+
+```{r}
+# The function uniroot() searches the interval from
+# lower to upper for a root (i.e., zero)
+uniroot(f=smuon, data=muon.data, lower=-1, upper=1)
+
+uniroot(f=smuon, data=muon.data, interval=c(-1,1))
+
+
+# optimization functions that by default perform minimization
+minus.lmuon <- function(alpha, data) -lmuon(alpha, data)
+
+nlminb(start=0.6, objective=minus.lmuon, data=muon.data, lower=-1, upper=1)
+
+optim(0.6, fn=minus.lmuon, data=muon.data, lower=-1, upper=1)
+optim(0.6, fn=minus.lmuon, method="Brent",data=muon.data, lower=-1, upper=1)
+```
+
+# Muon decay - asymptotic distribution MLE
+
+```{r}
+# recall the log-likelihood function
+lmuon <- function(alpha, data){
+  l <- sum(log(1+alpha*data))-length(data)*log(2)
+  return(l)
+}
+
+minus.lmuon <- function(alpha, data) -lmuon(alpha, data)
+
+# compute the MLE alpha.hat of alpha
+alpha.hat <- nlminb(0.6, minus.lmuon, data=muon.data, lower=-1, upper=1)$par
+
+# compute the observed information at alpha.hat
+j <- sum(muon.data^2/(1+alpha.hat*muon.data)^2)
+j
+
+# asymptotic approximation of the standard error
+se <- sqrt(1/j)
+se
+
+# approximate 95% confidence interval
+alpha.hat +c(-1, 1)*1.96*se
+
+# is the distribution uniform over the interval (-1;1)?
+#
+# H_0: alpha=0
+# H_1: alpha!=0
+t.obs <- (alpha.hat-0)/se
+p.value <- 2*pnorm(-abs(t.obs))
+p.value
+```
+
+```{r}
+# numerical derivative
+library(numDeriv)
+
+H <- hessian(func = lmuon, x = alpha.hat, data = muon.data)
+j <- -H[1,1]
+sqrt(1/j)
+```
+
+# Example: survival time for leukemia
+
+```{r}
+# data 
+x <- c(56,65,17,7,16,22,3,4,2,3,8,4,3,30,4,43)
+```
+
+Computation of MLEs as done on the slides
+
+```{r}
+score <- function(beta, data)
+{
+  n <- length(data)
+  n/beta +sum(log(data))-n*(sum(x^beta*log(data))/(sum(data^beta)))
+}
+
+hat.beta <- uniroot(score, data=x, interval=c(0.1,100))$root
+hat.beta
+hat.alpha <- (mean(x^hat.beta))^(1/hat.beta)
+hat.alpha
+```
+
+(alternative) computation of MLEs using only numerical procedures
+
+```{r}
+# density of Weibull distribution (as given in the slide)
+dW <- function(x, alpha, beta) beta*alpha^-1*(x/alpha)^(beta-1)*exp(-(x/alpha)^beta)
+dW(1, alpha=1, beta=2)
+
+# equivalent build-in function
+
+# shape = beta
+# scale = alpha
+
+dweibull(1, scale=1, shape=2)
+
+
+# log-likelihood function
+#
+# Note that:
+# 1.  the parameters are given as a single vector and 
+#     as first argument, this is a requirement of the function 
+#     nlminb() used later for optimization
+#
+# 2. we exploit the function dW() so as to avoid the 
+#    explicit computation (and implementation) of the
+#    log-likelihood function
+
+loglik.W <- function(par, data){#par=c(alpha, beta)
+  alpha <- par[1]
+  beta  <- par[2]
+  l <- sum(log(dW(data, alpha, beta))) 
+  return(l)
+}
+
+# change the sign of the log-likelihood function 
+# (required because the function nlminb() is a minimizer)
+#
+minus.loglik.W <- function(par, data) -loglik.W(par, data)
+
+
+# Numerical computation of the Maximum Likelihood Estimates 
+# of alpha and beta
+#
+opt.result <- nlminb(start = c(1,1), objective = minus.loglik.W, data=x)
+opt.result$par
+
+# store the estimate as scalars
+alpha.hat <- opt.result$par[1]
+beta.hat  <- opt.result$par[2]
+alpha.hat
+beta.hat
+```
+
+```{r}
+# Compute the observed information matrix
+# with a function for numerical derivatives
+
+library(numDeriv)
+
+# Hessian Matrix
+H <- hessian(func = loglik.W, x = c(alpha.hat, beta.hat), data=x)
+H
+
+# observed Fisher information  matrix
+J <- -H
+J
+
+# asymptotic variance and covariance matrix
+
+asy.var <- solve(J)
+asy.var
+
+# (approximate) standard error of parameters
+
+se.alpha <- sqrt(asy.var[1,1])
+se.beta  <- sqrt(asy.var[2,2])
+
+# 95% (approximate) confidence intervals
+
+alpha.hat+c(-1,1)*qnorm(0.975)*se.alpha
+beta.hat +c(-1,1)*qnorm(0.975)*se.beta
+
+# memoryless property?
+#
+# H_0: beta=1
+# H_1: beta!=1
+
+t.obs <- (beta.hat-1)/se.beta
+t.obs
+
+p.value <- 2*pnorm(-abs(t.obs))
+p.value
+```
