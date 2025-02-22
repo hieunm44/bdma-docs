@@ -1,0 +1,220 @@
+---
+title: "Lab 3: ARIMA models, Exponential Smoothing"
+output: html_notebook
+---
+
+```{r}
+Sys.setlocale('LC_ALL', 'C')
+library(fpp2)
+library(fpp3)
+library(forecast) 
+```
+
+# ARIMA models
+
+Data on quarterly percentage change in US consumption, income, production, savings, unemployment
+
+```{r}
+us_change
+# str(us_change)
+plot(us_change)
+autoplot(us_change)
+# different way of seeing the same series
+```
+
+```{r}
+# consider the series of consumption
+cons<- us_change[,2]
+autoplot(us_change, Consumption)
+Acf(cons)
+Pacf(cons)
+consts<- tsdisplay(cons)
+# General indication: if the ACF is exponentially decaying or sinusoidal and there is a significant spike at lag p in PACF and nothing else, 
+##it may be an ARMA(p,d,0). If the PACF is exponentially decaying or sinusoidal and there is a significant spike at lag p in ACF and nothing else, it may be an ARMA(0,d,q). 
+```
+
+```{r}
+arima1 <- Arima(cons, order=c(0,0,3))
+summary(arima1)
+
+resid1 <- residuals(arima1)
+tsdisplay(resid1)
+
+plot(cons)
+lines(fitted(arima1), col=2)
+
+for1 <- forecast(arima1)
+plot(for1)
+
+# Exercise: try other options and with the other series in the dataset
+```
+
+Data on retail trade index in Euro area (1996-2011)
+
+```{r}
+plot(euretail, ylab='retail index',xlab='year')
+tsdisplay(euretail)
+```
+
+```{r}
+# first difference
+diff1<- diff(euretail) 
+
+# seasonal difference
+diff4<- diff(euretail, lag=4) 
+tsdisplay(diff1)
+tsdisplay(diff4)
+```
+
+```{r}
+# first Arima model 
+a1<- Arima(euretail, order=c(0,1,1), seasonal=c(0,0,1))
+fit1<- fitted(a1)
+
+plot(euretail)
+lines(fit1, col=2)
+ 
+f1<- forecast(a1)
+plot(f1)
+
+r1<- residuals(a1)
+tsdisplay(r1) 
+```
+
+```{r}
+# second Arima model
+a2<- Arima(euretail, order=c(0,1,1), seasonal=c(0,0,2))
+fit2<- fitted(a2)
+
+plot(euretail)
+lines(fit2, col=2)
+
+f2<- forecast(a2)
+plot(f2)
+
+r2<- residuals(a2)
+tsdisplay(r2) 
+```
+
+```{r}
+# third Arima model
+a3<- Arima(euretail, order=c(0,1,1), seasonal=c(0,1,1))
+fit3<- fitted(a3)
+
+plot(euretail)
+lines(fit3, col=2)
+
+f3<- forecast(a3)
+plot(f3)
+
+r3<- residuals(a3)
+tsdisplay(r3) 
+```
+
+```{r}
+# fourth Arima model 
+a4<- Arima(euretail, order=c(0,1,2), seasonal=c(0,1,1))
+fit4<- fitted(a4)
+
+plot(euretail)
+lines(fit4, col=2)
+
+f4<- forecast(a4)
+autoplot(f4)
+
+r4<- residuals(a4)
+tsdisplay(r4) 
+```
+
+```{r}
+# fifth Arima model 
+auto.a<- auto.arima(euretail)
+auto.a
+
+autoplot(forecast(auto.a))
+checkresiduals(auto.a)
+
+# Exercise: try other solutions for modeling this series
+```
+
+Cortecosteroid drug sales in Australia
+
+```{r}
+lh02<- log(h02)
+
+# plot the data
+plot(h02, ylab='sales', xlab='year')
+
+# plot log transformation
+plot(lh02, ylab='logsales', xlab='year')
+
+# plot of seasonal differentiated data, with ACF and PACF
+tsdisplay(diff(lh02,12), main='seasonal differenced data', xlab='year')
+```
+
+```{r}
+# We fit an ARIMA model based on the inspection of ACF and PACF with 3 AR components
+fit<- Arima(lh02, order=c(3,0,1),seasonal=c(0,1,2))
+summary(fit)
+
+# Check residuals
+tsdisplay(residuals(fit))
+
+# perform the forecasting
+f<- forecast(fit)
+plot(f, ylab='sales', xlab='year')
+```
+
+# Exponential Smoothing methods
+
+Simple exponential smoothing
+
+```{r}
+oildata<- window(oil, start=1996)
+autoplot(oildata)+ylab('Oil (millions of tonnes)')+xlab('Year')
+
+fit1<- ses(oildata, alpha=0.2, initial='simple', h=5)
+fit2<- ses(oildata, alpha=0.6, initial='simple', h=5)
+fit3<- ses(oildata, h=5)
+
+
+plot(oildata, ylab='Oil', xlab='Year')
+lines(fitted(fit1), col='blue', type='o')
+lines(fitted(fit2), col='red', type='o')
+lines(fitted(fit3), col='green', type='o')
+```
+
+```{r}
+fc<- ses(oildata, h=5)
+round(accuracy(fc), 2)
+
+summary(fc)
+
+autoplot(fc)+
+  autolayer(fitted(fc), series='Fitted')+ylab('Oil (millions of tonnes)')+xlab('Year')
+```
+
+Trend methods (Holt method)
+
+```{r}
+air<- window(ausair, start=1990)
+fc<- holt(air, h=15)
+fc2<- holt(air, damped=T, phi=0.9, h=15)
+
+autoplot(air)+
+  autolayer(fc, series="Holt's method", PI=F)+
+  autolayer(fc2, series="Damped Holt's method", PI=F)
+```
+
+Trend and seasonality methods (Holt-Winters method)
+
+```{r}
+aust<- window(austourists, start=2005)
+autoplot(aust)
+
+fit1<- hw(aust, seasonal='additive')
+fit2<- hw(aust, seasonal='multiplicative')
+
+autoplot(aust)+
+  autolayer(fit2, series="Holt-Winters' method", PI=F)
+```

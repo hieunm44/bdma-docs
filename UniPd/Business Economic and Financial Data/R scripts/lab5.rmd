@@ -1,0 +1,448 @@
+---
+title: "Lab 5: Generalized Additive Models, Prophet, Gradient Boosting"
+output: html_notebook
+---
+
+```{r}
+Sys.setlocale('LC_ALL', 'C')
+library(fpp2)
+library(gam)
+library(prophet)
+library (gbm)
+library(viridis)
+setwd('/home/hieu/BDMA/TSA')
+```
+
+```{r}
+?arrivals
+autoplot(arrivals)
+autoplot(arrivals[,c(1,2)])
+
+Japan<- arrivals[,1]
+NZ<- arrivals[,2]
+UK<- arrivals[,3]
+US<- arrivals[,4]
+```
+
+# Linear regression
+
+```{r}
+tt<- (1:length(NZ))
+seas <- factor(c(rep(1:4,length(NZ)/4),1:3)) 
+#####1:3 because there are three observations 'out' 
+mod2 <- lm(NZ~ tt+seas)
+summary(mod2)
+AIC(mod2)
+```
+
+Linear model with no seasonality
+
+```{r}
+mod2a <- lm(NZ~ tt)
+summary(mod2a)
+```
+
+we now try with a GAM
+
+```{r}
+# Values for df should be greater than 1, with df=1 implying a linear fit. Default is df=4
+g1 <- gam(NZ~s(tt)+seas)
+summary(g1)
+
+par(mfrow=c(1,2))
+plot(g1, se=T)
+AIC(g1)
+
+# time has a nonlinear effect
+g1a <- gam(NZ~s(tt))
+par(mfrow=c(1,2))
+plot(g1a, se=T)
+summary(g1a)
+
+# linear model may be also performed with library(gam)
+g0 <- gam(NZ~(tt)+seas)
+summary(g0)
+par(mfrow=c(1,2))
+plot(g0, se=T)
+AIC(g0)
+```
+
+GAM with splines performs better
+
+```{r}
+# try another option with loess (lo)
+g2<- gam(NZ~lo(tt)+seas)
+summary(g2)
+par(mfrow=c(1,2))
+plot(g2, se=T)
+AIC(g2)
+
+# perform analysis of residuals
+tsdisplay(residuals(g1))
+aar1<- auto.arima(residuals(g1))
+
+plot(as.numeric(NZ), type='l')
+lines(fitted(g1), col=3)
+lines(fitted(aar1)+ fitted(g1), col=4)
+
+# Exercise: try also with the other variables 
+```
+
+# Prophet
+
+iPhone sales
+
+```{r}
+# data 
+iphone=read.csv('iphone.csv', sep=';')
+str(iphone)
+
+# some preliminary analysis on the data
+iphone$quarter=as.Date(iphone$quarter, format='%d/%m/%Y')
+str(iphone)
+colnames(iphone)=c('y','ds','cap')
+
+summary(iphone$y) ##to explain why cap is 100
+
+#plot
+plot(iphone$y, type='l', x=iphone$ds, ylab='', xlab='Year') 
+# nonlinear trend 
+# seasonality
+```
+
+```{r}
+# Prophet model
+# model with no seasonality
+# m2=prophet(iphone, yearly.seasonality=F, daily.seasonality=F, weekly.seasonality = F, growth='logistic', n.changepoints=15)
+
+
+# model with automatic selection of seasonality (default is 'auto')
+# in this case just yearly seasonality, if daily and weekly seasonsonality are needed we need to specify
+# changepoints not specified, automatically set
+m2=prophet(iphone,  growth='logistic') 
+
+# n.changepoints default number is 25
+summary(m2)
+```
+
+```{r}
+# create a future 'window' for prediction
+future2 <- make_future_dataframe(m2, periods = 20, freq='quarter', include_history = T)
+tail(future2)
+future2$cap=100
+
+forecast2 <- predict(m2, future2)
+tail(forecast2[c('ds', 'yhat', 'yhat_lower', 'yhat_upper')])
+
+# prediction plot
+plot(m2, forecast2)
+
+# Dynamic plot
+dyplot.prophet(m2, forecast2) 
+
+# plot with change points
+plot(m2, forecast2)+add_changepoints_to_plot(m2, threshold=0)
+```
+
+```{r}
+# dates corresponding to change points
+m2$changepoints
+
+# Prophet with no change points and multiplicative seasonality 
+m2=prophet(iphone,  growth='logistic', n.changepoints=0, seasonality.mode='multiplicative')
+
+# summary(m2)
+# m2$seasonalities 
+future2 <- make_future_dataframe(m2, periods = 20, freq='quarter', include_history = T)
+tail(future2)
+future2$cap=100
+
+forecast2 <- predict(m2, future2)
+tail(forecast2[c('ds', 'yhat', 'yhat_lower', 'yhat_upper')])
+
+# prediction plot
+plot(m2, forecast2)
+dyplot.prophet(m2, forecast2) 
+```
+
+# Generalized Additive Models
+
+'Movies' Dataset
+
+```{r}
+data <- read.csv('movies.csv', stringsAsFactors=TRUE)
+str(data)
+# erase columns of indicator variables
+data<-data[,-c(1,2)]
+
+# transform variable release_date in format 'data'
+data$release_date <- as.Date(data$release_date, '%d/%m/%Y')
+
+str(data)
+
+# Response variable
+summary(data$vote_average)
+#boxplot(data$vote_average, col='orange', ylim=c(0,10), main='Movies', ylab='Rating')
+hist(data$vote_average, col='orange', main='Movies', xlab='Rating')
+# explanatory variables
+summary(data)
+```
+
+```{r}
+summary(data[,c(1,2,5,6)])
+par(mfrow=c(2,2))
+for(i in c(1,2,5,6)){
+  hist(data[,i], col='orange', main=paste(colnames(data)[i]), xlab='')
+}
+
+#transform quantitative variables in log scale
+data$budget <- log(data$budget)
+data$popularity <- log(data$popularity)
+data$revenue <- log(data$revenue)
+
+summary(data[,c(1,2,5,6)])
+```
+
+```{r}
+par(mfrow=c(2,2))
+for(i in c(1,2,5,6)){
+  hist(data[,i], col='orange', main=paste(colnames(data)[i]), xlab='')
+}
+#go back to orginal panel 
+par(mfrow=c(1,1))
+
+#transform release_date in numeric 
+data$release_date<-as.numeric(data$release_date)
+summary(data$release_date)
+
+#as.numeric(as.Date('1970-01-01'))
+
+
+# Set train and test
+set.seed(1)
+train = sample (1:nrow(data), 0.7*nrow(data))
+data.train=data[train ,]
+data.test=data[-train ,]
+
+# make some variables factor
+data.train[,c(3,7, 10:24)]= lapply(data.train[,c(3,7, 10:24)],factor)
+data.test[,c(3,7, 10:24)]= lapply(data.test[,c(3,7, 10:24)],factor)
+
+str(data.train)
+```
+
+# Linear Model
+
+```{r}
+m1 <- lm(vote_average~.-vote_classes, data=data.train)
+
+summary(m1)
+
+# Stepwise Regression
+m2 <- step(m1, direction='both')
+summary(m2)
+
+#Prediction
+p.lm <- predict(m2, newdata=data.test)
+dev.lm <- sum((p.lm-data.test$vote_average)^2)
+dev.lm
+
+AIC(m2)
+```
+
+# GAM
+
+```{r}
+# Stepwise GAM
+# Start with a linear model (df=1)
+g3 <- gam(vote_average~.-vote_classes, data=data.train)
+
+# Show the linear effects 
+par(mfrow=c(3,5))
+plot(g3, se=T) 
+
+# Perform stepwise selection using gam scope
+# Values for df should be greater than 1, with df=1 implying a linear fit
+
+sc = gam.scope(data.train[,-8], response=8, arg=c('df=2','df=3','df=4'))
+g4<- step.Gam(g3, scope=sc, trace=T)
+summary(g4)
+
+AIC(g4)
+```
+
+```{r}
+par(mfrow=c(3,5))
+plot(g4, se=T)
+
+# if we want to see better some plot
+par(mfrow=c(1,1))
+plot(g4, se=T, ask=T)
+
+# Prediction
+data.test[,c(3,7, 10:24)]= lapply(data.test[,c(3,7, 10:24)],factor)
+p.gam <- predict(g4,newdata=data.test)     
+dev.gam <- sum((p.gam-data.test$vote_average)^2)
+dev.gam
+```
+
+# Gradient Boosting
+
+Boosting-
+
+```{r}
+boost.movies=gbm(vote_average ~ .-vote_classes, data=data.train, 
+                 distribution='gaussian', n.trees=5000, interaction.depth=1)
+
+# for the plot
+par(mfrow=c(1,1))
+
+# plot of training error
+plot(boost.movies$train.error, type='l', ylab='training error')
+```
+
+```{r}
+# always decreasing with increasing number of trees
+# relative influence plot
+summary(boost.movies) 
+```
+
+```{r}
+# let us modify the graphical parameters to obtain a better plot 1re space on the left
+# default vector of parameters
+mai.old<-par()$mai
+mai.old
+# new vector
+mai.new<-mai.old
+# new space on the left
+mai.new[2] <- 2.5 
+mai.new
+# modify graphical parameters
+par(mai=mai.new)
+summary(boost.movies, las=1) 
+# las=1 horizontal names on y
+summary(boost.movies, las=1, cBar=10) 
+# cBar defines how many variables
+# back to orginal window
+par(mai=mai.old)
+```
+
+```{r}
+# test set prediction for every iteration (1:5000)
+yhat.boost=predict(boost.movies, newdata=data.test, n.trees=1:5000)
+
+# calculate the error for each iteration
+# use 'apply' to perform a 'cycle for' 
+# the first element is the matrix we want to use, 2 means 'by column', 
+# and the third element indicates the function we want to calculate
+
+err = apply(yhat.boost, 2, function(pred) mean((data.test$vote_average - pred)^2))
+plot(err, type='l')
+
+# error comparison (train e test)
+plot(boost.movies$train.error, type='l')
+lines(err, type='l', col=2)
+# minimum error in test set
+best=which.min(err)
+abline(v=best, lty=2, col=4)
+min(err) #minimum error
+```
+
+Boosting - Deeper trees
+
+```{r}
+boost.movies=gbm(vote_average ~ .-vote_classes, data=data.train, 
+                 distribution='gaussian', n.trees=5000, interaction.depth=4)
+
+plot(boost.movies$train.error, type='l')
+summary(boost.movies, las=1, cBar=10)  
+```
+
+```{r}
+yhat.boost=predict(boost.movies ,newdata=data.test,n.trees=1:5000)
+err = apply(yhat.boost,2,function(pred) mean((data.test$vote_average-pred)^2))
+plot(err, type='l')
+
+
+plot(boost.movies$train.error, type='l')
+lines(err, type='l', col=2)
+best=which.min(err)
+abline(v=best, lty=2, col=4)
+min(err)
+```
+
+Boosting - Smaller learning rate
+
+```{r}
+boost.movies=gbm(vote_average ~ .-vote_classes, data=data.train, 
+                 distribution='gaussian', n.trees=5000, interaction.depth=1, shrinkage=0.01)
+plot(boost.movies$train.error, type='l')
+
+par(mai=mai.new)
+
+summary(boost.movies, las=1, cBar=10) 
+par(mai=mai.old)
+```
+
+```{r}
+yhat.boost=predict(boost.movies ,newdata=data.test,n.trees=1:5000)
+err = apply(yhat.boost,2,function(pred) mean((data.test$vote_average-pred)^2))
+plot(err, type='l')
+
+
+plot(boost.movies$train.error, type='l')
+lines(err, type='l', col=2)
+best=which.min(err)
+abline(v=best, lty=2, col=4)
+min(err)
+```
+
+Boosting - combination of previous models
+
+```{r}
+boost.movies=gbm(vote_average ~ .-vote_classes ,data=data.train, 
+                 distribution='gaussian',n.trees=5000, interaction.depth=4, shrinkage=0.01)
+
+plot(boost.movies$train.error, type='l')
+#
+
+par(mai=mai.new)
+
+summary(boost.movies, las=1, cBar=10) 
+
+par(mai=mai.old)
+```
+
+```{r}
+yhat.boost=predict(boost.movies ,newdata=data.test,n.trees=1:5000)
+err = apply(yhat.boost, 2, function(pred) mean((data.test$vote_average-pred)^2))
+plot(err, type='l')
+
+
+plot(boost.movies$train.error, type='l')
+lines(err, type='l', col=2)
+best=which.min(err)
+abline(v=best, lty=2, col=4)
+err.boost= min(err)
+```
+
+```{r}
+# Comparison of models in terms of residual deviance
+dev.gbm<- (sum((yhat.boost[,best]-data.test$vote_average)^2))
+# dev.gbm
+# dev.gam
+# dev.lm
+
+boost.movies
+# partial dependence plots
+plot(boost.movies, i.var=1, n.trees = best)
+plot(boost.movies, i.var=2, n.trees = best)
+plot(boost.movies, i.var=5, n.trees = best)
+plot(boost.movies, i.var=c(1,5), n.trees = best) #bivariate (library(viridis) may be necessary)
+#
+plot(boost.movies, i.var=3, n.trees = best) # categorical
+plot(boost.movies, i.var=6, n.trees = best)
+
+plot(boost.movies, i=23, n.trees = best) # categorical
+plot(boost.movies, i=17, n.trees = best) #no effect
+```

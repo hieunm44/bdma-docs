@@ -1,0 +1,297 @@
+---
+title: "Lab 4: Nonlinear regression, ARIMA models, ARMAX models, Exponential Smoothing"
+output: html_notebook
+---
+
+```{r}
+Sys.setlocale('LC_ALL', 'C')
+library(fpp2)
+library(forecast) 
+library(readxl)
+library(DIMORA)
+setwd('/home/hieu/BDMA/TSA')
+```
+
+Competition between cassettes and CDs
+
+```{r}
+music<- read_excel('music.xlsx')
+
+colors <- grey(seq(0, 1, length = 5))
+
+year<- music$year[1:36]
+cass<- music$cassette[1:36]
+cd<- music$cd[10:36]
+#
+##Exploratory plots
+#instantaneous
+plot(year[10:36],cass[10:36],xlab='Year', ylab='Annual sales',   type= 'b', pch=16, lty=3, cex=0.7, ylim=c(0,1000), col=colors[1])
+points(year[10:36],cd, type= 'b', pch=2, lty=3, cex=0.7, col=colors[3])
+legend('topleft', legend=c('Cassette', 'CD'), pch=c(16,2), col=c(colors[1], colors[3]))
+#
+#cumulative
+plot(year[10:36],sum(cass[1:9])+cumsum(cass[10:36]),xlab='Year', ylab='Cumulative sales',   type= 'b', pch=16, lty=3, cex=0.7, ylim=c(0,15000), col=colors[1])
+points(year[10:36],cumsum(cd), type= 'b', pch=2, lty=3, cex=0.7, col=colors[3])
+legend('topleft', legend=c('Cassette', 'CD'), pch=c(16,2), col=c(colors[1], colors[3]))
+```
+
+```{r}
+# UCRCD model with delta and gamma (par = 'double')
+ucrcd<- UCRCD(cass,cd, display=T)
+summary(ucrcd)
+
+# Plot observed vs fitted
+plot(year[10:36],cass[10:36],xlab='Year', ylab='Annual sales',   type= 'b', pch=16, lty=3, cex=0.7, ylim=c(0,1000), col=colors[1])
+points(year[10:36],cd, type= 'b', pch=2, lty=3, cex=0.7, col=colors[3])
+lines(year[10:36], (ucrcd$fitted.i[[1]])[10:36], lwd=1, col=colors[1])
+lines(year[10:36], (ucrcd$fitted.i[[2]]), lwd=1, col=colors[3])
+legend('topleft', legend=c('Cassette', 'CD'), lty=1, lwd=2, col=colors[c(1,3)], pch=c(16,2), cex=0.7)
+
+plot(year[10:36],sum(cass[1:9])+cumsum(cass[10:36]),xlab='Year', ylab='Cumulative sales',   type= 'b', pch=16, lty=3, cex=0.7, ylim=c(0,15000), col=colors[1])
+points(year[10:36],cumsum(cd), type= 'b', pch=2, lty=3, cex=0.7, col=colors[3])
+lines(year[10:36], cumsum(ucrcd$fitted.i[[1]])[10:36], lwd=1, col=colors[1])
+lines(year[10:36], cumsum(ucrcd$fitted.i[[2]]), lwd=1, col=colors[3])
+legend('topleft', legend=c('Cassette', 'CD'), lty=1, lwd=2, col=colors[c(1,3)], pch=c(16,2), cex=0.7)
+```
+
+# ARMAX models
+
+Data on US personal consumption and income
+
+```{r}
+uschange
+plot(uschange) # 'classical view'
+autoplot(uschange) # 'all the series together'
+```
+
+```{r}
+# if we want to see just the first two series
+par(mfrow=c(2,1))
+plot(uschange[,1])
+plot(uschange[,2])
+
+tsdisplay(uschange[,1])
+
+# to go back to 1 panel 
+par(mfrow=c(1,1))
+```
+
+```{r}
+##estimate an ARMAX model
+armax1<- Arima(uschange[,1], xreg=uschange[,2], order=c(1,0,1))
+res1<- residuals(armax1)
+Acf(res1)
+
+fitted(armax1)
+plot(uschange[,1])
+lines(fitted(armax1), col=2)
+```
+
+```{r}
+armax2<- Arima(uschange[,1], xreg=uschange[,2], order=c(1,0,2))
+res2<- residuals(armax2)
+Acf(res2)
+
+fitted(armax2)
+plot(uschange[,1])
+lines(fitted(armax2), col=2)
+AIC(armax2)
+AIC(arima1)
+# Note: forecasts are available only if we have future values of 'income'
+
+# procedure also available with auto.arima
+auto.arima<- auto.arima(uschange[,1], xreg=uschange[,2])
+```
+
+Quarterly international arrivals (in thousands) to Australia from Japan, New Zealand, the UK and the US. 1981Q1 - 2012Q3
+
+```{r}
+?arrivals
+autoplot(arrivals)
+autoplot(arrivals[,c(1,2)])
+```
+
+```{r}
+Japan<- arrivals[,1]
+NZ<- arrivals[,2]
+UK<- arrivals[,3]
+US<- arrivals[,4]
+
+# #we try with a simple arima model, ARMAX
+auto.a<- auto.arima(NZ, xreg=Japan) 
+AIC(auto.a)
+
+# We try with a regression model with trend, season, and external variable 'Japan'
+mod<- tslm(NZ~ trend+season+Japan) 
+summary(mod)
+fitted(mod)
+plot(NZ)
+lines(fitted(mod), col=2)
+plot(residuals(mod))
+```
+
+```{r}
+# analysis of residuals: autocorrelation? 
+tsdisplay(residuals(mod))
+# fit an arima model to residuals
+aar<- auto.arima(residuals(mod))
+fitted(aar)
+
+# complete the analysis by summing predictions made with linear model and arma on residuals
+plot(NZ)
+lines(fitted(mod)+fitted(aar), col=3)
+
+# Notice the difference between the two methods: ARMAX and linear regression+ Arima on residuals
+
+# #Another way of performing the same linear regression
+tt<- (1:length(NZ))
+seas <- factor(c(rep(1:4,length(NZ)/4),1:3)) #1:3 because there are three observations 'out' 
+mod2 <- lm(NZ~ tt+seas+Japan)
+summary(mod2)
+AIC(mod2)
+AIC(mod)
+```
+
+Forecasting electricity demand
+
+```{r}
+elecdaily
+plot(elecdaily)
+
+# fit a quadratic regression model with ARMA errors using the auto.arima function
+xreg <- cbind(MaxTemp = elecdaily[, 'Temperature'],
+              MaxTempSq = elecdaily[, 'Temperature']^2,
+              Workday = elecdaily[, 'WorkDay'])
+fit <- auto.arima(elecdaily[, 'Demand'], xreg = xreg)
+checkresiduals(fit)
+# The model has some significant autocorrelation in the residuals
+
+# using the estimated model we forecast 14 days ahead, setting for the next 14 days a temperature at a constant level of 26.
+fcast <- forecast(fit,
+                  xreg = cbind(MaxTemp=rep(26,14), MaxTempSq=rep(26^2,14),
+                               Workday=c(0,1,0,0,1,1,1,1,1,0,0,1,1,1)))
+
+plot(fcast)
+```
+
+Lagged Predictors
+
+```{r}
+plot(insurance, main='Insurance advertising and quotations', xlab='year', xaxt='n')
+axis(1, at=c(2002,2003,2004,2005),labels=c('2002','2003','2004','2005'), line=-1, lwd=0, lwd.ticks=0.5)
+
+# we consider 1 lagged predictor
+advert<- cbind(insurance[,2], c(NA,insurance[1:39,2]))
+colnames(advert)<- paste('AdLag',0:1, sep='')
+fit<- auto.arima(insurance[,1], xreg=advert[,1:2],d=0)
+summary(fit)
+
+# we provide the forecast by assuming that advertising is 8 units in each future month
+f<-forecast(fit,h=20, xreg=cbind(AdLag0=rep(8,20),AdLag1=c(advert[40,1],rep(8,19))))
+plot(f)
+```
+
+# SARMAX refinement for diffusion models
+
+Twitter Revenues
+
+```{r}
+twitter<- read_excel('twitter.xlsx')
+length(twitter$twitter)
+tw<- (twitter$twitter)
+```
+
+```{r}
+# GGM 
+GGM_tw<- GGM(tw, prelimestimates=c(4.463368e+04, 0.001, 0.01, 1.923560e-03, 9.142022e-02))
+summary(GGM_tw)
+```
+
+```{r}
+pred_GGM_tw<- predict(GGM_tw, newx=c(1:60))
+pred_GGM_tw.inst<- make.instantaneous(pred_GGM_tw)
+
+plot(tw, type= 'b',xlab='Quarter', ylab='Quarterly revenues',  pch=16, lty=3, cex=0.6, xlim=c(1,60))
+lines(pred_GGM_tw.inst, lwd=2, col=2)
+lines(pred_GGM_tw.inst, lwd=2, col=3)
+
+# Analysis of residuals
+res_GGMtw<- residuals(GGM_tw)
+acf<- acf(residuals(GGM_tw))
+
+fit_GGMtw<- fitted(GGM_tw) ##they are cumulative values
+fit_GGMtw_inst<- make.instantaneous(fit_GGMtw)
+```
+
+SARMAX refinement
+
+```{r}
+# SARMAX model with external covariate 'fit_GGM' 
+s2 <- Arima(cumsum(tw), order = c(3,0,1), seasonal=list(order=c(3,0,1), period=4),xreg = fit_GGMtw)
+summary(s2)
+
+pres2 <- make.instantaneous(fitted(s2))
+
+plot(twitter$twitter, type= 'b',xlab='Quarter', ylab='Quarterly revenues',  pch=16, lty=3, xaxt='n', cex=0.6)
+axis(1, at=c(1,10,19,28,37,46), labels=twitter$quarter[c(1,10,19,28,37,46)])
+lines(fit_GGMtw_inst, lwd=1, lty=2)
+lines(pres2, lty=1,lwd=1, col=2)
+```
+
+Interest in Zoom according to searches in Google \####
+
+```{r}
+interest<- read.csv('zoomgoogle.csv')
+int<- interest$zoom[90:180]
+week <- as.Date(interest$week[90:180])
+# we set a 'timing' more refined for graphical purposes only
+tfine150 <- seq(1,150,0.01) 
+
+# Exploratory plots
+plot(int, type= 'b',xlab='Week', ylab='Weekly Google searches',  pch=16, lty=3, cex=0.6, xaxt='n')
+axis(1, at=c(1,18,36,54,72,90), labels=format(week[c(1,18,36,54,72,90)], '%d/%m/%y'))
+
+plot(cumsum(int), type= 'b',xlab='Week', ylab='Cumulative Google searches',  pch=16, lty=3, cex=0.6, xaxt='n')
+axis(1, at=c(1,18,36,54,72,90), labels=format(week[c(1,18,36,54,72,90)], '%d/%m/%y'))
+```
+
+```{r}
+# GBM with one exponential shock
+gbme1.go<- GBM(int,shock = 'exp',nshock = 1,prelimestimates = c(4.046997e+03, 0.001, 0.1, 30,-01,5))
+
+# Prediction with GBMe1
+pred.gbme1go<- predict(gbme1.go, newx=tfine150)
+pred.gbme1goi<- make.instantaneous(pred.gbme1go)[-1]
+
+# Plots observed vs predicted
+plot(int, type= 'b',xlab='Week', ylab='Weekly Google searches',  pch=16, lty=3, cex=0.6, xaxt='n', col=colors[3])
+axis(1, at=c(1,18,36,54,72,90), labels=format(week[c(1,18,36,54,72,90)], '%d/%m/%y'))
+lines(tfine150[-1], pred.gbme1goi*100, lwd=2, col=1)
+
+plot(cumsum(int), type= 'b',xlab='Week', ylab='Cumulative Google searches',  pch=16, lty=3, cex=0.6, xaxt='n',col=colors[3])
+axis(1, at=c(1,18,36,54,72,90), labels=format(week[c(1,18,36,54,72,90)], '%d/%m/%y'))
+lines(tfine150, pred.gbme1go, lwd=2, col=1)
+```
+
+SARMAX refinement
+
+```{r}
+fit.google<- fitted(gbme1.go)
+s2 <- Arima(cumsum(int), order = c(1,0,1), seasonal=list(order=c(0,0,1), period=52), xreg = fit.google)
+summary(s2)
+
+pres2 <- make.instantaneous(fitted(s2))
+
+# Plots observed vs predicted with SARMAX refinement
+plot(int, type= 'b',xlab='week', ylab='Weekly Google searches',  pch=16, lty=3, cex=0.6, xaxt='n', col=colors[3])
+axis(1, at=c(1,18,36,54,72,90), labels=format(week[c(1,18,36,54,72,90)], '%d/%m/%y'))
+lines(tfine150[-1], pred.gbme1goi*100, lwd=1, lty=2)
+lines(pres2, lty=1,lwd=1)
+legend('topright', legend=c('GBMe1','GBMe1+SARMAX'), lty=c(2,1))
+
+plot(cumsum(int), type= 'b',xlab='week', ylab='Cumulative Google searches',  pch=16, lty=3, cex=0.6, xaxt='n', col=colors[3])
+axis(1, at=c(1,18,36,54,72,90), labels=format(week[c(1,18,36,54,72,90)], '%d/%m/%y'))
+lines(tfine150, pred.gbme1go, lwd=1, lty=2)
+lines(cumsum(pres2), lty=1,lwd=1)
+legend('bottomright', legend=c('GBMe1','GBMe1+SARMAX'), lty=c(2,1))
+```
