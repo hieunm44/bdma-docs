@@ -16,7 +16,7 @@
 
 ## Overview
 This repo summarizes documents (slides, notes, books, papers, assignments, exams) in the courses that I attended in the [Erasmus Mundus Joint Master Degree Programme in Big Data Management and Analytics (BDMA)](https://bdma.ulb.ac.be/). This program covers Big Data (BD) and Business Intelligence (BI), complemented with ethics and horizontal skills.
-BDMA is jointly delivered by __Université Libre de Bruxelles (ULB)__ in Belgium, __Universitat Politècnica de Catalunya (UPC)__ in Spain, __Technische Universiteit Eindhoven (TU/e)__ in Netherlands, __Centrale Supélec (CS)__ in France and __Università degli Studi di Padova (UniPD)__ in Italy. All students will study at ULB and UPC in the first two semesters, and we are allowed to choose our desired university for the third semester (I chose UniPd). In my cohort (2023-2025), the Master's Thesis Defence and Graduation Ceremony were organized at UniPd.
+BDMA is jointly delivered by __Université Libre de Bruxelles (ULB)__ in Belgium, __Universitat Politècnica de Catalunya (UPC)__ in Spain, __Technische Universiteit Eindhoven (TU/e)__ in Netherlands, __Centrale Supélec (CS)__ in France and __Università degli Studi di Padova (UniPD)__ in Italy. All students will study at ULB and UPC in the first two semesters, and we are allowed to choose our desired university for the third semester (I chose UniPd). In my cohort (2023-2025), the Master's Thesis Defence and Graduation Ceremony were organized at TU/e on September 11-12, 2025.
 <div align="center">
     <a>
     <img src="https://bdma.ulb.ac.be/files/bdma_image_holistic.jpg" height=300"/>
